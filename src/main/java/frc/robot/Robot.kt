@@ -1,8 +1,17 @@
 package frc.robot
 
+import edu.wpi.first.hal.FRCNetComm.tInstances
+import edu.wpi.first.hal.FRCNetComm.tResourceType
+import edu.wpi.first.hal.HAL
+import edu.wpi.first.wpilibj.DriverStation
+import edu.wpi.first.wpilibj.Joystick
 import edu.wpi.first.wpilibj.PowerDistribution
+import edu.wpi.first.wpilibj.RobotBase
+import edu.wpi.first.wpilibj.util.WPILibVersion
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.CommandScheduler
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController
+import frc.robot.subsystems.flywheels.Flywheel
 import org.littletonrobotics.junction.LogFileUtil
 import org.littletonrobotics.junction.LoggedRobot
 import org.littletonrobotics.junction.Logger
@@ -25,26 +34,54 @@ object Robot : LoggedRobot() {
     private var autonomousCommand: Command? = null
 
     override fun robotInit() {
-
-        Logger.recordMetadata("SwerveBase", "SwerveBase")
-
+        HAL.report(
+            tResourceType.kResourceType_Language, tInstances.kLanguage_Kotlin, 0, WPILibVersion.Version
+        )
 
         if (isReal()) {
             Logger.addDataReceiver(WPILOGWriter("/U")) // Log to a USB stick
             Logger.addDataReceiver(NT4Publisher()) // Publish data to NetworkTables
-            PowerDistribution(1, PowerDistribution.ModuleType.kRev) // Enables power distribution logging
+            PowerDistribution(
+                1, PowerDistribution.ModuleType.kRev
+            ) // Enables power distribution logging
         } else {
-            setUseTiming(false) // Run as fast as possible
-            val logPath: String = LogFileUtil.findReplayLog() // Pull the replay log from AdvantageScope (or prompt the user)
-            Logger.setReplaySource(WPILOGReader(logPath)) // Read replay log
-            Logger
-                .addDataReceiver(WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))) // Save outputs to a new log
+            var logPath: String? = null
+            try {
+                logPath = LogFileUtil.findReplayLog() // Pull the replay log from AdvantageScope (or
+                // prompt the user)
+            } catch (_: java.util.NoSuchElementException) {
+            }
+
+            if (logPath == null) {
+                // No replay log, so perform physics simulation
+                Logger.addDataReceiver(NT4Publisher())
+            } else {
+                // Replay log exists, so replay data
+                setUseTiming(false) // Run as fast as possible
+                Logger.setReplaySource(WPILOGReader(logPath)) // Read replay log
+                Logger.addDataReceiver(
+                    WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))
+                ) // Save outputs to a new log
+            }
         }
         Logger.start() // Start logging! No more data receivers, replay sources, or metadata values may be added.
 
-        // Access the RobotContainer object so that it is initialized. This will perform all our
-        // button bindings, and put our autonomous chooser on the dashboard.
-        RobotContainer
+        DriverStation.silenceJoystickConnectionWarning(RobotBase.isSimulation())
+
+
+        Flywheel.register()
+        configureBindings()
+    }
+
+    private fun configureBindings() {
+        val joystickLeft = Joystick(0)
+        val joystickRight = Joystick(1)
+        val xboxController = CommandXboxController(2)
+
+//        Drivetrain.defaultCommand =
+//            DriveWithJoysticks(translationJoystick = joystickLeft, rotationJoystick = joystickRight)
+
+        xboxController.a().whileTrue(Flywheel.shoot())
     }
 
 
@@ -61,7 +98,7 @@ object Robot : LoggedRobot() {
     }
 
     override fun autonomousInit() {
-        autonomousCommand = RobotContainer.autonomousCommand
+        autonomousCommand = null
         autonomousCommand?.schedule()
     }
 
