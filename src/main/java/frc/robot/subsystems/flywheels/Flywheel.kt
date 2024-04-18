@@ -5,7 +5,7 @@ import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Subsystem
 
 object Flywheel: Subsystem {
-    var io = RealFlywheelIO()
+    var io: FlywheelIO = SimFlywheelIO()
 
     fun shoot(): Command {
         return this.runEnd({
