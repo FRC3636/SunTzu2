@@ -18,6 +18,7 @@ import org.littletonrobotics.junction.Logger
 import org.littletonrobotics.junction.networktables.NT4Publisher
 import org.littletonrobotics.junction.wpilog.WPILOGReader
 import org.littletonrobotics.junction.wpilog.WPILOGWriter
+import subsystems.intake.Intake
 
 
 /**
@@ -70,6 +71,7 @@ object Robot : LoggedRobot() {
 
 
         Flywheel.register()
+        Intake.register()
         configureBindings()
     }
 
@@ -81,7 +83,7 @@ object Robot : LoggedRobot() {
 //        Drivetrain.defaultCommand =
 //            DriveWithJoysticks(translationJoystick = joystickLeft, rotationJoystick = joystickRight)
 
-        xboxController.a().whileTrue(Flywheel.shoot())
+        xboxController.a().whileTrue(Intake.intake())
     }
 
 
