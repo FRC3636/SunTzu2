@@ -9,6 +9,7 @@ import edu.wpi.first.units.Distance
 import edu.wpi.first.units.Measure
 import edu.wpi.first.units.Units.*
 import edu.wpi.first.units.Velocity
+import edu.wpi.first.units.Voltage
 import edu.wpi.first.wpilibj.simulation.FlywheelSim
 
 interface FlywheelIO {
@@ -48,16 +49,15 @@ class RealFlywheelIO : FlywheelIO {
 
 class SimFlywheelIO: FlywheelIO {
 
+
     private val leftFlywheel = FlywheelSim(DCMotor.getNeoVortex(1), 1.0, 0.01)
-    private val rightFlywheel = FlywheelSim(DCMotor.getNeoVortex(1), 1.0, 0.01)
-    override fun setVelocity(speed: Measure<Velocity<Distance>>) {
-        leftFlywheel.
+    //private val rightFlywheel = FlywheelSim(DCMotor.getNeoVortex(1), 1.0, 0.01)
+    override fun setVelocity(voltage: Measure<Voltage>) {
+        leftFlywheel.setInputVoltage(voltage.baseUnitMagnitude())
     }
 
     override fun getVelocity(): Measure<Velocity<Distance>> {
         return MetersPerSecond.of(leftFlywheel.angularVelocityRadPerSec * FLYWHEEL_RADIUS.`in`(Meters))
-        return MetersPerSecond.of(rightFlywheel.angularVelocityRadPerSec * FLYWHEEL_RADIUS.`in`(Meters))
-
     }
 
     companion object Constants {
